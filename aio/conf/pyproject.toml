@@ -1,0 +1,38 @@
+[project]
+name = "your-project-name"
+version = "0.1.0"
+description = "A Python project with dbt, dagster, and data tooling"
+authors = [
+    { name="Your Name", email="you@example.com" }
+]
+requires-python = ">=3.9,<3.10"
+dependencies = [
+    "jupyter==1.0.0",
+    "pandas==1.4.3",
+    "prettytable==3.3.0",
+    "dbt-core==1.0.0",
+    "dbt-spark[PyHive]==1.0.0",
+    "dbt-trino==1.0.0",
+    "dbt-postgres==1.0.0",
+    "pyspark==3.3.0",
+    "dagit<1.1.21",
+    "dagster<=1.1.21",
+    "dagster-gcp",
+    "dagster-dbt",
+    "dagster-pyspark",
+    "dagster-spark",
+    "awscliv2",
+    "markupsafe==2.0.1",
+    "trino",
+    "requests>=2.28.0",
+    "kaggle==1.5.12",
+    "yfinance",
+    "pmdarima",
+    "matplotlib",
+    "pendulum<3.0",
+    "numpy<2",
+    "uvicorn==0.20.0",
+    "pydantic<1.10.22",
+    "watchdog<5",
+    "yfinance>=0.2.54"
+]

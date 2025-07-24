@@ -44,12 +44,14 @@ RUN apt-get update && apt-get upgrade -y && \
       postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR ${INSTALL_DIR}
-
+WORKDIR ${SPARK_HOME}
 # Install python deps
-COPY conf/requirements.txt .
-RUN pip3 install --no-cache-dir -r requirements.txt \
-    && rm requirements.txt
+COPY conf/pyproject.toml .
+COPY conf/uv.lock .
+RUN pip3 install uv && uv sync --no-dev
+ENV PATH="/opt/spark/.venv/bin:${PATH}"
+
+WORKDIR ${INSTALL_DIR}
 
 # Download and install IJava jupyter kernel
 RUN curl https://github.com/SpencerPark/IJava/releases/download/v1.3.0/ijava-1.3.0.zip -Lo ijava-1.3.0.zip \
