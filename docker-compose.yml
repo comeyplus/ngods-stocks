@@ -53,6 +53,8 @@ services:
       - POSTGRES_DB=ngods
     ports:
       - '5432:5432'
+    volumes:
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d
     networks:
       - ndsnet
     healthcheck:
@@ -152,7 +154,116 @@ services:
       - 3030:3030
     networks:
       - ndsnet
+
+  redis:
+    image: redis:7
+    container_name: superset_cache
+    hostname: redis
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    ports:
+      - '6379:6379'
+    networks:
+      - ndsnet
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  superset:
+    build: ./superset
+    container_name: superset_app
+    hostname: superset
+    command: ["gunicorn", "--bind", "0.0.0.0:8088", "--access-logfile", "-", "--error-logfile", "-", "--workers", "1", "--worker-class", "gthread", "--threads", "20", "--timeout", "60", "--limit-request-line", "0", "--limit-request-field_size", "0", "superset.app:create_app()"]
+    user: "root"
+    restart: unless-stopped
+    ports:
+      - 8088:8088
+    env_file:
+      - ./conf/superset/superset.env
+    depends_on:
+      superset-init:
+        condition: service_completed_successfully
+    volumes:
+      - superset_home:/app/superset_home
+    networks:
+      - ndsnet
+
+  superset-init:
+    build: ./superset
+    container_name: superset_init
+    hostname: superset-init
+    command: >
+      bash -c "
+      superset fab create-admin --username admin --firstname Admin --lastname Admin --email admin@superset.com --password admin &&
+      superset db upgrade &&
+      superset init
+      "
+    env_file:
+      - ./conf/superset/superset.env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    user: "root"
+    volumes:
+      - superset_home:/app/superset_home
+    networks:
+      - ndsnet
+    healthcheck:
+      disable: true
+
+  superset-worker:
+    build: ./superset
+    container_name: superset_worker
+    hostname: superset-worker
+    command: ["celery", "--app=superset.tasks.celery_app:app", "worker", "-O", "fair", "-l", "info"]
+    env_file:
+      - ./conf/superset/superset.env
+    restart: unless-stopped
+    depends_on:
+      superset-init:
+        condition: service_completed_successfully
+    user: "root"
+    volumes:
+      - superset_home:/app/superset_home
+    networks:
+      - ndsnet
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "celery -A superset.tasks.celery_app:app inspect ping -d celery@$$HOSTNAME",
+        ]
+
+  superset-worker-beat:
+    build: ./superset
+    container_name: superset_worker_beat
+    hostname: superset-worker-beat
+    command: ["celery", "--app=superset.tasks.celery_app:app", "beat", "--pidfile=", "-l", "info"]
+    env_file:
+      - ./conf/superset/superset.env
+    restart: unless-stopped
+    depends_on:
+      superset-init:
+        condition: service_completed_successfully
+    user: "root"
+    volumes:
+      - superset_home:/app/superset_home
+    networks:
+      - ndsnet
+    healthcheck:
+      disable: true
   
 networks:
   ndsnet:
     driver: bridge
+
+volumes:
+  superset_home:
+    external: false
+  redis_data:
+    external: false
