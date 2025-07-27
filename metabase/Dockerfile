@@ -1,5 +1,5 @@
 ARG metabase_repo=metabase
-ARG metabase_version=latest
+ARG metabase_version=v0.45.3
 FROM metabase/${metabase_repo}:${metabase_version} as metabase
 
 FROM openjdk:19-slim-bullseye
