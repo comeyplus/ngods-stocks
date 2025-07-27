@@ -26,6 +26,7 @@ ngods stands for New Generation Opensource Data Stack. It includes the following
 - [Dagster](https://dagster.io/) for data orchetsration 
 - [cube.dev](https://cube.dev/) for data analysis and semantic data model 
 - [Metabase](https://www.metabase.com/) for self-service data visualization (dashboards) 
+- [Apache Superset](https://superset.apache.org/) for modern data exploration and visualization platform
 - [Minio](https://min.io) for local S3 storage 
 
 ![ngods components](./img/ngods.architecture.png)
@@ -79,23 +80,36 @@ See the [cube.dev documentation](https://cube.dev/docs/) for more information.
 
 You can create your own data visualizations and dashboards. See the [Metabase documentation](https://metabase.com/docs/latest) for more information.
 
-7. Predict stock close price. Run the [ARIMA time-series prediction model](http://localhost:8888/notebooks/arima.ipynb) notebook that is trained on 29 months of the `Apple:AAPL` stock data and predicts the next month.
+7. Explore data with Apache Superset. Access the [Superset interface](http://localhost:8088) for modern data exploration and advanced visualizations.
+
+Use username `admin` and password `admin` to login.
+
+To get started with data exploration:
+- Go to **Settings** → **Database Connections** 
+- Add a PostgreSQL connection: `postgresql://ngods:ngods@postgres:5432/ngods` (recommended for beginners)
+- Or add a Trino connection: `trino://admin@trino:8060/warehouse` (for advanced analytics)
+- Use **SQL Lab** to write queries and create visualizations
+- Build interactive dashboards with rich chart types
+
+See the [Superset documentation](https://superset.apache.org/docs/) for more information on creating charts and dashboards.
+
+8. Predict stock close price. Run the [ARIMA time-series prediction model](http://localhost:8888/notebooks/arima.ipynb) notebook that is trained on 29 months of the `Apple:AAPL` stock data and predicts the next month.
 
 ![Jupyter ARIMA](./img/jupyter.arima.png)
 
-8. Download [DBeaver](https://dbeaver.io/download/) SQL tool.
+9. Download [DBeaver](https://dbeaver.io/download/) SQL tool.
 
-9. Connect to the Postgres database that contains the `gold` stage data. Use `jdbc:postgresql://localhost:5432/ngods` JDBC URL with username `ngods` and password `ngods`.
+10. Connect to the Postgres database that contains the `gold` stage data. Use `jdbc:postgresql://localhost:5432/ngods` JDBC URL with username `ngods` and password `ngods`.
 
 ![Postgres JDBC connection](./img/demo/postgres.jdbc.connection.png)
 
-10. Connect to the Trino database that has access to all data stages (`bronze`, `silver`, and `gold` schemas of the `warehouse` database). Use `jdbc:trino://localhost:8060` JDBC URL with username `trino` and password `trino`. 
+11. Connect to the Trino database that has access to all data stages (`bronze`, `silver`, and `gold` schemas of the `warehouse` database). Use `jdbc:trino://localhost:8060` JDBC URL with username `trino` and password `trino`. 
 
 ![Trino JDBC connection](./img/demo/trino.jdbc.connection.png)
 
 ![Trino schemas](./img/demo/trino.schemas.png)
 
-11. Connect to the Spark database that is used for data transformations. Use `jdbc:hive2://localhost:10009` JDBC URL with no username and password.
+12. Connect to the Spark database that is used for data transformations. Use `jdbc:hive2://localhost:10009` JDBC URL with no username and password.
 
 ![Spark JDBC connection](./img/demo/spark.jdbc.connection.png)
 
@@ -134,6 +148,10 @@ The data stack has the following endpoints
     - `jdbc:postgresql://localhost:3245/cube` JDBC URL (username `cube` / password `cube`)
 - Metabase
     - http://localhost:3030 Metabase UI (username `metabase@ngods.com` / password `metabase1`)
+- Superset
+    - http://localhost:8088 - Apache Superset UI (username `admin` / password `admin`)
+    - **PostgreSQL 连接** (推荐开始使用): `postgresql://ngods:ngods@postgres:5432/ngods` - 用于存储和查询结构化数据
+    - **Trino 连接** (高级分析): `trino://admin@trino:8060/warehouse` - 用于大数据查询和分析
 - Dagster
     - http://localhost:3070 - Dagster orchestration UI
 - Minio
@@ -174,7 +192,7 @@ All data pipeline phases are orchestrated by [Dagster](https://www.dagster.io/) 
 The pipeline is executed by running the e2e job from the Dagster console at http://localhost:3070/ using [this yaml config file](./projects/dagster/e2e.yaml)
 
 ## ngods analytics layer
-ngods includes [cube.dev](https://cube.dev/) for [semantic data model](./conf/cube/schema) and [Metabase](https://www.metabase.com/) for self-service analytics (dashboards, reports, and visualizations).
+ngods includes [cube.dev](https://cube.dev/) for [semantic data model](./conf/cube/schema), [Metabase](https://www.metabase.com/) and [Apache Superset](https://superset.apache.org/) for self-service analytics (dashboards, reports, and visualizations).
 
 ![Analytics](./img/analytics.png)
 
@@ -185,6 +203,8 @@ Analytical (semantic) model is defined in [cube.dev](https://cube.dev/) and is u
 [Metabase](https://www.metabase.com/) is connected to the [cube.dev](https://cube.dev/) via [SQL API](https://cube.dev/docs/backend/sql). End users can use it for self-service creation of dashboards, reports, and data visualizations. [Metabase](https://www.metabase.com/) is also directly connected to the gold schema in the Postgres database.
 
 ![Metabase](./img/demo/metabase.cube.connection.png)
+
+[Apache Superset](https://superset.apache.org/) provides a modern, enterprise-ready business intelligence web application. It can connect to both PostgreSQL and Trino databases, offering advanced visualization capabilities and SQL Lab for interactive data exploration. Superset supports rich visualizations, dashboard creation, and can handle large-scale analytics workloads through its Trino integration.
 
 ## ngods machine learning
 [Jupyter Notebooks](https://jupyter.org/) with Scala, Java and Python backends can be used for machine learning.
