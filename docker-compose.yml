@@ -1,4 +1,34 @@
 version: '3.9'
+
+# Airflow 通用配置
+x-airflow-common:
+  &airflow-common
+  image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:3.0.3}
+  environment: &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+    AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow123@postgres/airflow
+    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow123@postgres/airflow
+    AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/1
+    AIRFLOW__CORE__FERNET_KEY: 'YlCImzjge_TeZc7jPJ7Jz2pgOtb4yTssA1pVyqIADWg='
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
+    _PIP_ADDITIONAL_REQUIREMENTS: 'apache-airflow-providers-postgres apache-airflow-providers-celery apache-airflow-providers-redis'
+  volumes:
+    - ./data/airflow/dags:/opt/airflow/dags
+    - ./data/airflow/logs:/opt/airflow/logs
+    - ./data/airflow/config:/opt/airflow/config
+    - ./data/airflow/plugins:/opt/airflow/plugins
+  user: "${AIRFLOW_UID:-50000}:0"
+  depends_on: &airflow-common-depends-on
+    redis:
+      condition: service_healthy
+    postgres:
+      condition: service_healthy
+  networks:
+    - ndsnet
+
 services:
 
   minio:
@@ -257,6 +287,136 @@ services:
       - ndsnet
     healthcheck:
       disable: true
+
+  # Airflow 服务
+  airflow-init:
+    <<: *airflow-common
+    container_name: airflow_init
+    hostname: airflow-init
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        if [[ -z "$${AIRFLOW_UID}" ]]; then
+          echo "设置 AIRFLOW_UID"
+          export AIRFLOW_UID=$$(id -u)
+        fi
+        echo "创建必要的目录..."
+        mkdir -p /opt/airflow/{logs,dags,plugins,config}
+        echo "初始化 Airflow 数据库..."
+        airflow db migrate
+        echo "创建管理员用户..."
+        airflow users create \
+          --username admin \
+          --firstname Admin \
+          --lastname Admin \
+          --role Admin \
+          --email admin@airflow.com \
+          --password admin
+        echo "Airflow 初始化完成"
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_MIGRATE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: admin
+      _AIRFLOW_WWW_USER_PASSWORD: admin
+    user: "0:0"
+    healthcheck:
+      disable: true
+
+  airflow-apiserver:
+    <<: *airflow-common
+    container_name: airflow_apiserver
+    hostname: airflow-apiserver
+    command: api-server
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/api/v2/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    <<: *airflow-common
+    container_name: airflow_scheduler
+    hostname: airflow-scheduler
+    command: scheduler
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8974/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-dag-processor:
+    <<: *airflow-common
+    container_name: airflow_dag_processor
+    hostname: airflow-dag-processor
+    command: dag-processor
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type DagProcessorJob --hostname "$${HOSTNAME}"']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-worker:
+    <<: *airflow-common
+    container_name: airflow_worker
+    hostname: airflow-worker
+    command: celery worker
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - 'celery --app airflow.providers.celery.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}" || celery --app airflow.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}"'
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    environment:
+      <<: *airflow-common-env
+      DUMB_INIT_SETSID: "0"
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-apiserver:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-triggerer:
+    <<: *airflow-common
+    container_name: airflow_triggerer
+    hostname: airflow-triggerer
+    command: triggerer
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type TriggererJob --hostname "$${HOSTNAME}"']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
   
 networks:
   ndsnet:

@@ -8,7 +8,7 @@ This repository contains a stock market analysis demo of the ngods data stack. T
 5. Visualize data as reports and dashboards using [Metabase](https://www.metabase.com/).
 6. Predicts stock prices using ARIMA in Apache Spark.
 
-The demo is packaged as [docker-compose](https://github.com/docker/compose) script that downloads, installs, and runs all components of the data stack.
+The demo is packaged as [docker-compose](https://github.com/docker/compose) script that downloads, installs, and runs all components of the data stack. The data workflows can be orchestrated using either [Dagster](https://dagster.io/) or [Apache Airflow](https://airflow.apache.org/).
 
 ## UPDATES
 - 2023-02-03: 
@@ -24,6 +24,7 @@ ngods stands for New Generation Opensource Data Stack. It includes the following
 - [Trino](https://trino.io/) for federated data query 
 - [dbt](https://www.getdbt.com/) for ELT 
 - [Dagster](https://dagster.io/) for data orchetsration 
+- [Apache Airflow](https://airflow.apache.org/) for workflow orchestration and scheduling
 - [cube.dev](https://cube.dev/) for data analysis and semantic data model 
 - [Metabase](https://www.metabase.com/) for self-service data visualization (dashboards) 
 - [Apache Superset](https://superset.apache.org/) for modern data exploration and visualization platform
@@ -93,23 +94,36 @@ To get started with data exploration:
 
 See the [Superset documentation](https://superset.apache.org/docs/) for more information on creating charts and dashboards.
 
-8. Predict stock close price. Run the [ARIMA time-series prediction model](http://localhost:8888/notebooks/arima.ipynb) notebook that is trained on 29 months of the `Apple:AAPL` stock data and predicts the next month.
+8. Orchestrate workflows with Apache Airflow. Access the [Airflow interface](http://localhost:8080) for workflow management and scheduling.
+
+Use username `admin` and password `admin` to login.
+
+To get started with workflow orchestration:
+- Review the example DAG `ngods_platform_example` on the **DAGs** page
+- Create your own DAGs to automate data pipeline tasks
+- Use Airflow to schedule and monitor ETL processes
+- Integrate with Spark, dbt, Trino, and other platform components
+- Monitor task execution and logs in the **Browse** → **Task Instances** section
+
+Airflow is already configured to connect to your PostgreSQL database and can interact with all platform components through the shared Docker network. See the [Airflow Integration Guide](./AIRFLOW_INTEGRATION.md) for detailed setup and usage instructions.
+
+9. Predict stock close price. Run the [ARIMA time-series prediction model](http://localhost:8888/notebooks/arima.ipynb) notebook that is trained on 29 months of the `Apple:AAPL` stock data and predicts the next month.
 
 ![Jupyter ARIMA](./img/jupyter.arima.png)
 
-9. Download [DBeaver](https://dbeaver.io/download/) SQL tool.
+10. Download [DBeaver](https://dbeaver.io/download/) SQL tool.
 
-10. Connect to the Postgres database that contains the `gold` stage data. Use `jdbc:postgresql://localhost:5432/ngods` JDBC URL with username `ngods` and password `ngods`.
+11. Connect to the Postgres database that contains the `gold` stage data. Use `jdbc:postgresql://localhost:5432/ngods` JDBC URL with username `ngods` and password `ngods`.
 
 ![Postgres JDBC connection](./img/demo/postgres.jdbc.connection.png)
 
-11. Connect to the Trino database that has access to all data stages (`bronze`, `silver`, and `gold` schemas of the `warehouse` database). Use `jdbc:trino://localhost:8060` JDBC URL with username `trino` and password `trino`. 
+12. Connect to the Trino database that has access to all data stages (`bronze`, `silver`, and `gold` schemas of the `warehouse` database). Use `jdbc:trino://localhost:8060` JDBC URL with username `trino` and password `trino`. 
 
 ![Trino JDBC connection](./img/demo/trino.jdbc.connection.png)
 
 ![Trino schemas](./img/demo/trino.schemas.png)
 
-12. Connect to the Spark database that is used for data transformations. Use `jdbc:hive2://localhost:10009` JDBC URL with no username and password.
+13. Connect to the Spark database that is used for data transformations. Use `jdbc:hive2://localhost:10009` JDBC URL with no username and password.
 
 ![Spark JDBC connection](./img/demo/spark.jdbc.connection.png)
 
@@ -122,6 +136,7 @@ Here are few distribution's directories that you may need to customize:
 - `conf` configuration of all data stack components
     - `cube` cube.dev schema (semantic model definition)
 - `data` main data directory 
+    - `airflow` Airflow DAGs, logs, config and plugins
     - `minio` root data directory (contains buckets and file data)
     - `spark` Jupyter notebooks
     - `stage` file stage data. Spark can access this directory via `/var/lib/ngods/stage` path. 
@@ -152,6 +167,10 @@ The data stack has the following endpoints
     - http://localhost:8088 - Apache Superset UI (username `admin` / password `admin`)
     - **PostgreSQL 连接** (推荐开始使用): `postgresql://ngods:ngods@postgres:5432/ngods` - 用于存储和查询结构化数据
     - **Trino 连接** (高级分析): `trino://admin@trino:8060/warehouse` - 用于大数据查询和分析
+- Airflow
+    - http://localhost:8080 - Apache Airflow UI (username `admin` / password `admin`)
+    - Workflow orchestration and scheduling
+    - DAG management and task monitoring
 - Dagster
     - http://localhost:3070 - Dagster orchestration UI
 - Minio
@@ -185,11 +204,21 @@ and consists of the following phases:
 
 ![DBT models](./img/dbt.models.png)
 
-All data pipeline phases are orchestrated by [Dagster](https://www.dagster.io/) framework. Dagster operations, resources and jobs are defined in the [Dagster project](./projects/dagster/). 
+All data pipeline phases can be orchestrated by either [Dagster](https://www.dagster.io/) or [Apache Airflow](https://airflow.apache.org/) frameworks:
+
+**Dagster** operations, resources and jobs are defined in the [Dagster project](./projects/dagster/). 
 
 ![Dagster console](./img/dagster.console.png)
 
 The pipeline is executed by running the e2e job from the Dagster console at http://localhost:3070/ using [this yaml config file](./projects/dagster/e2e.yaml)
+
+**Apache Airflow** provides an alternative workflow orchestration solution with:
+- Web-based UI for monitoring and managing workflows
+- Powerful scheduling and retry mechanisms  
+- Extensive integration with external systems
+- Sample DAGs demonstrating platform integration
+
+See the [Airflow Integration Guide](./AIRFLOW_INTEGRATION.md) for detailed information on using Airflow for data pipeline orchestration.
 
 ## ngods analytics layer
 ngods includes [cube.dev](https://cube.dev/) for [semantic data model](./conf/cube/schema), [Metabase](https://www.metabase.com/) and [Apache Superset](https://superset.apache.org/) for self-service analytics (dashboards, reports, and visualizations).
