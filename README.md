@@ -216,9 +216,19 @@ The pipeline is executed by running the e2e job from the Dagster console at http
 - Web-based UI for monitoring and managing workflows
 - Powerful scheduling and retry mechanisms  
 - Extensive integration with external systems
+- **Complete stock pipeline**: A full Airflow version of the Dagster demo pipeline
 - Sample DAGs demonstrating platform integration
 
-See the [Airflow Integration Guide](./AIRFLOW_INTEGRATION.md) for detailed information on using Airflow for data pipeline orchestration.
+The **Airflow Stock Pipeline** is a complete port of the Dagster demo, featuring:
+- **Modern dependency management**: Uses `uv` and `pyproject.toml` for fast, reliable builds
+- **Independent schema namespace**: `airflow_bronze`, `airflow_silver`, `airflow_gold`
+- **Identical functionality**: data download, DBT processing, ARIMA prediction
+- **Zero conflict**: Runs parallel to existing Dagster workflows
+- **One-command setup**: `./quick-start-airflow.sh`
+
+✨ **Quick Start**: `./quick-start-airflow.sh` → http://localhost:8080
+
+See the [Airflow Integration Guide](./AIRFLOW_INTEGRATION.md), [Pipeline Documentation](./AIRFLOW_STOCK_PIPELINE.md), and [Success Summary](./AIRFLOW_INTEGRATION_SUCCESS.md) for detailed information.
 
 ## ngods analytics layer
 ngods includes [cube.dev](https://cube.dev/) for [semantic data model](./conf/cube/schema), [Metabase](https://www.metabase.com/) and [Apache Superset](https://superset.apache.org/) for self-service analytics (dashboards, reports, and visualizations).

@@ -1,0 +1,83 @@
+[project]
+name = "ngods-airflow-stock-pipeline"
+version = "0.1.0"
+description = "NGODS Airflow Stock Pipeline - Complete port from Dagster demo"
+authors = [
+    { name="NGODS Team", email="team@ngods.com" }
+]
+requires-python = ">=3.9,<3.13"
+dependencies = [
+    # Core Airflow providers (required for Airflow 3.0+)
+    "apache-airflow-providers-fab>=1.0.0",
+    "apache-airflow-providers-postgres>=5.0.0",
+    "apache-airflow-providers-celery>=3.0.0", 
+    "apache-airflow-providers-redis>=3.0.0",
+    "apache-airflow-providers-common-sql>=1.0.0",
+    
+    # Stock pipeline specific dependencies
+    "yfinance>=0.2.18",
+    "pandas>=1.5.0",
+    "pmdarima>=2.0.0",
+    "trino>=0.324.0",
+    "pyspark>=3.4.0",
+    "scikit-learn>=1.2.0",
+    "numpy>=1.24.0,<2.0.0",
+    
+    # Data processing and ML
+    "matplotlib>=3.6.0",
+    "seaborn>=0.12.0",
+    "pyarrow>=10.0.0",
+    
+    # Database and connectivity
+    "psycopg2-binary>=2.9.0",
+    "sqlalchemy>=1.4.0",
+    
+    # Utilities
+    "requests>=2.28.0",
+    "beautifulsoup4>=4.11.0",
+    "lxml>=4.9.0",
+    
+    # DBT integration (optional, for future expansion)
+    "dbt-core>=1.6.0",
+    "dbt-trino>=1.6.0",
+    "dbt-postgres>=1.6.0"
+]
+
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+# 避免自动发现包，这只是一个依赖配置文件
+packages = []
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "flake8>=6.0.0"
+]
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88 

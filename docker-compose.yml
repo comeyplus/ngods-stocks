@@ -3,18 +3,20 @@ version: '3.9'
 # Airflow 通用配置
 x-airflow-common:
   &airflow-common
-  image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:3.0.3}
+  build: 
+    context: ./airflow
+    dockerfile: Dockerfile
   environment: &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
     AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow123@postgres/airflow
     AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow123@postgres/airflow
-    AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/1
+    AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
     AIRFLOW__CORE__FERNET_KEY: 'YlCImzjge_TeZc7jPJ7Jz2pgOtb4yTssA1pVyqIADWg='
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://airflow-apiserver:8080/execution/'
     AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
-    _PIP_ADDITIONAL_REQUIREMENTS: 'apache-airflow-providers-postgres apache-airflow-providers-celery apache-airflow-providers-redis'
   volumes:
     - ./data/airflow/dags:/opt/airflow/dags
     - ./data/airflow/logs:/opt/airflow/logs
@@ -303,23 +305,18 @@ services:
         fi
         echo "创建必要的目录..."
         mkdir -p /opt/airflow/{logs,dags,plugins,config}
+        mkdir -p /opt/airflow/dags/config
+        
         echo "初始化 Airflow 数据库..."
-        airflow db migrate
-        echo "创建管理员用户..."
-        airflow users create \
-          --username admin \
-          --firstname Admin \
-          --lastname Admin \
-          --role Admin \
-          --email admin@airflow.com \
-          --password admin
-        echo "Airflow 初始化完成"
+        /entrypoint airflow db migrate
+        echo "Airflow 初始化完成（包含股票管道支持）"
     environment:
       <<: *airflow-common-env
       _AIRFLOW_DB_MIGRATE: 'true'
       _AIRFLOW_WWW_USER_CREATE: 'true'
-      _AIRFLOW_WWW_USER_USERNAME: admin
-      _AIRFLOW_WWW_USER_PASSWORD: admin
+      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
+      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
+      _PIP_ADDITIONAL_REQUIREMENTS: ''
     user: "0:0"
     healthcheck:
       disable: true
