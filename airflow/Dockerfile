@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     libpq-dev \
     build-essential \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # 切换回airflow用户

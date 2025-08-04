@@ -20,10 +20,11 @@ The demo is packaged as [docker-compose](https://github.com/docker/compose) scri
 ngods stands for New Generation Opensource Data Stack. It includes the following components: 
 
 - [Apache Spark](https://spark.apache.org) for data transformation 
+- [DuckDB](https://duckdb.org/) for embedded analytics (Airflow ecosystem)
 - [Apache Iceberg](https://iceberg.apache.org) as a data storage format 
 - [Trino](https://trino.io/) for federated data query 
 - [dbt](https://www.getdbt.com/) for ELT 
-- [Dagster](https://dagster.io/) for data orchetsration 
+- [Dagster](https://dagster.io/) for data orchestration 
 - [Apache Airflow](https://airflow.apache.org/) for workflow orchestration and scheduling
 - [cube.dev](https://cube.dev/) for data analysis and semantic data model 
 - [Metabase](https://www.metabase.com/) for self-service data visualization (dashboards) 
@@ -97,6 +98,12 @@ See the [Superset documentation](https://superset.apache.org/docs/) for more inf
 8. Orchestrate workflows with Apache Airflow. Access the [Airflow interface](http://localhost:8080) for workflow management and scheduling.
 
 Use username `admin` and password `admin` to login.
+
+**DuckDB Integration**: Airflow includes DuckDB for embedded analytics. Example DAGs:
+- `ngods_stock_pipeline_duckdb.py`: Complete stock data processing
+- `ngods_stock_pipeline_duckdb_simple.py`: Simplified version
+
+DuckDB runs as an embedded database within Airflow workers, providing fast analytics without additional services.
 
 To get started with workflow orchestration:
 - Review the example DAG `ngods_platform_example` on the **DAGs** page

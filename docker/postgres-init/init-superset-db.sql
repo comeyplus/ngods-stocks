@@ -15,4 +15,11 @@ GRANT ALL PRIVILEGES ON DATABASE airflow TO airflow;
 
 -- 连接到airflow数据库并授权
 \c airflow;
-GRANT ALL ON SCHEMA public TO airflow; 
+GRANT ALL ON SCHEMA public TO airflow;
+
+-- -- 启用pg_duckdb扩展
+-- CREATE EXTENSION IF NOT EXISTS duckdb;
+
+-- 为ngods数据库启用pg_duckdb扩展
+-- \c ngods;
+-- CREATE EXTENSION IF NOT EXISTS duckdb; 

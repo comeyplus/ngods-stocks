@@ -24,6 +24,8 @@ x-airflow-common:
     - ./data/airflow/logs:/opt/airflow/logs
     - ./projects/airflow/config:/opt/airflow/config
     - ./data/airflow/plugins:/opt/airflow/plugins
+    - ./data/stage:/var/lib/ngods/stage
+    - ./data/duckdb:/var/lib/ngods/duckdb
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on: &airflow-common-depends-on
     redis:
@@ -78,7 +80,7 @@ services:
         condition: service_healthy  
 
   postgres:
-    image: postgres
+    image: pgduckdb/pgduckdb:17-main
     hostname: postgres
     container_name: postgres
     environment:
