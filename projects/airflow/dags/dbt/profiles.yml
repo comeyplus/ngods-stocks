@@ -1,0 +1,43 @@
+spark:
+  target: dev
+  outputs:
+    dev:
+      type: spark
+      method: thrift
+      host: aio
+      port: 10009
+      user: airflow
+      schema: airflow_bronze
+      connect_retries: 5
+      connect_timeout: 60
+      retry_all: true
+
+spark_silver:
+  target: dev
+  outputs:
+    dev:
+      type: spark
+      method: thrift
+      host: aio
+      port: 10009
+      user: airflow
+      schema: airflow_silver
+      connect_retries: 5
+      connect_timeout: 60
+      retry_all: true
+
+trino:
+  target: dev
+  outputs:
+    dev:
+      type: trino
+      user: trino
+      host: trino
+      port: 8060
+      database: analytics
+      schema: airflow_gold
+      threads: 1
+      http_scheme: http
+      session_properties:
+        query_max_run_time: 5d
+        exchange_compression: True 

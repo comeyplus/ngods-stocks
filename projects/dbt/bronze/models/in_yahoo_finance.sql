@@ -8,4 +8,4 @@ select
 		cast(trim(_c6) as long) as volume,
 		cast(trim(_c7) as numeric(32,16)) as dividends,
 		cast(trim(_c8) as numeric(32,16)) as splits						
-	from csv.`/var/lib/ngods/stage/stocks.csv`
+	from `file:///var/lib/ngods/stage/stocks_airflow.csv`

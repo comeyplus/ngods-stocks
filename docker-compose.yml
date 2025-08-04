@@ -12,21 +12,31 @@ x-airflow-common:
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow123@postgres/airflow
     AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow123@postgres/airflow
     AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
-    AIRFLOW__CORE__FERNET_KEY: 'YlCImzjge_TeZc7jPJ7Jz2pgOtb4yTssA1pVyqIADWg='
+    AIRFLOW__CORE__FERNET_KEY: 'G6ptm0VWi5ano-gzGp_hCiU8Tw07ixm_MrI8pGJ8SmQ='
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://airflow-apiserver:8080/execution/'
     AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
+    AIRFLOW__API_AUTH__JWT_SECRET: 'rxgCxpv9pay7qmNJJ3pkPdCDx/64SSWtduTQ7Oj+cOg='
+    AIRFLOW__WEBSERVER__SECRET_KEY: 'rxgCxpv9pay7qmNJJ3pkPdCDx/64SSWtduTQ7Oj+cOg='
+    # Spark集群连接配置
+    SPARK_MASTER_URL: 'spark://aio:7077'
+    SPARK_HOME: '/opt/spark'
+    SPARK_CONF_DIR: '/opt/spark/conf'
+    # 添加Spark连接的环境变量
+    AIRFLOW_CONN_SPARK_AIO: 'spark://aio:7077'
   volumes:
-    - ./data/airflow/dags:/opt/airflow/dags
+    - ./projects/airflow/dags:/opt/airflow/dags
     - ./data/airflow/logs:/opt/airflow/logs
-    - ./data/airflow/config:/opt/airflow/config
+    - ./projects/airflow/config:/opt/airflow/config
     - ./data/airflow/plugins:/opt/airflow/plugins
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on: &airflow-common-depends-on
     redis:
       condition: service_healthy
     postgres:
+      condition: service_healthy
+    aio:
       condition: service_healthy
   networks:
     - ndsnet
@@ -131,6 +141,12 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8061"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
   
   trino:
     build: trino/
@@ -309,7 +325,11 @@ services:
         
         echo "初始化 Airflow 数据库..."
         /entrypoint airflow db migrate
-        echo "Airflow 初始化完成（包含股票管道支持）"
+        
+        echo "设置 Spark 连接..."
+        python /opt/airflow/config/spark_connections.py
+        
+        echo "Airflow 初始化完成（包含股票管道支持和Spark集群连接）"
     environment:
       <<: *airflow-common-env
       _AIRFLOW_DB_MIGRATE: 'true'
@@ -335,6 +355,13 @@ services:
       retries: 5
       start_period: 30s
     restart: always
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_MIGRATE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
+      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
+      _PIP_ADDITIONAL_REQUIREMENTS: ''
     depends_on:
       <<: *airflow-common-depends-on
       airflow-init:
@@ -351,6 +378,13 @@ services:
       timeout: 10s
       retries: 5
       start_period: 30s
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_MIGRATE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
+      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
+      _PIP_ADDITIONAL_REQUIREMENTS: ''
     restart: always
     depends_on:
       <<: *airflow-common-depends-on
@@ -369,6 +403,13 @@ services:
       retries: 5
       start_period: 30s
     restart: always
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_MIGRATE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
+      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
+      _PIP_ADDITIONAL_REQUIREMENTS: ''
     depends_on:
       <<: *airflow-common-depends-on
       airflow-init:
@@ -389,7 +430,11 @@ services:
       start_period: 30s
     environment:
       <<: *airflow-common-env
-      DUMB_INIT_SETSID: "0"
+      _AIRFLOW_DB_MIGRATE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
+      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
+      _PIP_ADDITIONAL_REQUIREMENTS: ''
     restart: always
     depends_on:
       <<: *airflow-common-depends-on

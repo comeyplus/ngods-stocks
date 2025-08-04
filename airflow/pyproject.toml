@@ -13,13 +13,14 @@ dependencies = [
     "apache-airflow-providers-celery>=3.0.0", 
     "apache-airflow-providers-redis>=3.0.0",
     "apache-airflow-providers-common-sql>=1.0.0",
+    "apache-airflow-providers-apache-spark>=4.0.0",
     
     # Stock pipeline specific dependencies
     "yfinance>=0.2.18",
     "pandas>=1.5.0",
     "pmdarima>=2.0.0",
     "trino>=0.324.0",
-    "pyspark>=3.4.0",
+    "pyspark==3.3.0",
     "scikit-learn>=1.2.0",
     "numpy>=1.24.0,<2.0.0",
     
@@ -40,7 +41,8 @@ dependencies = [
     # DBT integration (optional, for future expansion)
     "dbt-core>=1.6.0",
     "dbt-trino>=1.6.0",
-    "dbt-postgres>=1.6.0"
+    "dbt-postgres>=1.6.0",
+    "dbt-spark[PyHive]>=1.6.0"
 ]
 
 [build-system]
