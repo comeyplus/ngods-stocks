@@ -48,16 +48,16 @@ DBT_CONFIG = {
 
 # 数据文件配置（使用airflow前缀避免冲突）
 DATA_CONFIG = {
-    'target_file': '/var/lib/ngods/stage/stocks_airflow.csv',
+    'target_file': '/opt/airflow/dags/stage/stocks_airflow.csv',
     'symbols': ['AAPL', 'GOOGL', 'ORCL', 'MSFT', 'CRM', 'IBM', 'AMZN', 'GC=F', 'BTC-USD', 'ETH-USD'],
     'start_date': '2000-01-01',
-    'backup_dir': '/var/lib/ngods/stage/backup/airflow/',
-    'processed_dir': '/var/lib/ngods/stage/processed/airflow/'
+    'backup_dir': '/opt/airflow/dags/stage/backup/airflow/',
+    'processed_dir': '/opt/airflow/dags/stage/processed/airflow/'
 }
 
 # 日志配置
 LOGGING_CONFIG = {
-    'level': 'INFO',
+    'level': 'DEBUG',
     'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     'handlers': ['console', 'file']
 }
