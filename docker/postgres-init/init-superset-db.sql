@@ -1,6 +1,6 @@
 -- 为Superset创建数据库和用户
 CREATE DATABASE superset;
-CREATE USER superset WITH ENCRYPTED PASSWORD 'superset123';
+CREATE USER superset WITH ENCRYPTED PASSWORD '${SUPERSET_DATABASE_PASSWORD}';
 GRANT ALL PRIVILEGES ON DATABASE superset TO superset;
 
 -- 连接到superset数据库并授权
@@ -10,7 +10,7 @@ GRANT ALL ON SCHEMA public TO superset;
 -- 为Airflow创建数据库和用户
 \c postgres;
 CREATE DATABASE airflow;
-CREATE USER airflow WITH ENCRYPTED PASSWORD 'airflow123';
+CREATE USER airflow WITH ENCRYPTED PASSWORD '${AIRFLOW_DB_PASSWORD}';
 GRANT ALL PRIVILEGES ON DATABASE airflow TO airflow;
 
 -- 连接到airflow数据库并授权

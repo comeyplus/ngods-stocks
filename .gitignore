@@ -56,3 +56,11 @@ projects/dagster/metastore_db
 
 # Metabase 
 conf/metabase/metabase.db.trace.db
+
+# 环境变量文件
+env.local
+.env
+*.env.local
+
+# 数据库初始化脚本备份
+docker/postgres-init/*.backup

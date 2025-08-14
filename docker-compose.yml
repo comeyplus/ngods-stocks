@@ -9,16 +9,16 @@ x-airflow-common:
   environment: &airflow-common-env
     AIRFLOW__CORE__EXECUTOR: CeleryExecutor
     AIRFLOW__CORE__AUTH_MANAGER: airflow.providers.fab.auth_manager.fab_auth_manager.FabAuthManager
-    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow123@postgres/airflow
-    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow123@postgres/airflow
-    AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
-    AIRFLOW__CORE__FERNET_KEY: 'G6ptm0VWi5ano-gzGp_hCiU8Tw07ixm_MrI8pGJ8SmQ='
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: ${AIRFLOW__DATABASE__SQL_ALCHEMY_CONN}
+    AIRFLOW__CELERY__RESULT_BACKEND: ${AIRFLOW__CELERY__RESULT_BACKEND}
+    AIRFLOW__CELERY__BROKER_URL: ${AIRFLOW__CELERY__BROKER_URL}
+    AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW__CORE__FERNET_KEY}
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
     AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://airflow-apiserver:8080/execution/'
     AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
-    AIRFLOW__API_AUTH__JWT_SECRET: 'rxgCxpv9pay7qmNJJ3pkPdCDx/64SSWtduTQ7Oj+cOg='
-    AIRFLOW__WEBSERVER__SECRET_KEY: 'rxgCxpv9pay7qmNJJ3pkPdCDx/64SSWtduTQ7Oj+cOg='
+    AIRFLOW__API_AUTH__JWT_SECRET: ${AIRFLOW__API_AUTH__JWT_SECRET}
+    AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW__WEBSERVER__SECRET_KEY}
   volumes:
     - ./projects/airflow/dags:/opt/airflow/dags
     - ./data/airflow/logs:/opt/airflow/logs
@@ -47,8 +47,8 @@ services:
     volumes:
       - ./data/minio:/data
     environment:
-      - MINIO_ROOT_USER=minio
-      - MINIO_ROOT_PASSWORD=minio123
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
     command: server /data --console-address ":9001"
     networks:
       - ndsnet
@@ -63,9 +63,9 @@ services:
     container_name: mc
     hostname: mc
     environment:
-      - AWS_ACCESS_KEY_ID=minio
-      - AWS_SECRET_ACCESS_KEY=minio123
-      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
     networks:
       - ndsnet
     entrypoint: >
@@ -84,13 +84,14 @@ services:
     hostname: postgres
     container_name: postgres
     environment:
-      - POSTGRES_PASSWORD=ngods
-      - POSTGRES_USER=ngods
-      - POSTGRES_DB=ngods
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_DB=${POSTGRES_DB}
     ports:
       - '5432:5432'
     volumes:
       - ./docker/postgres-init:/docker-entrypoint-initdb.d
+      - ./data/postgres:/var/lib/postgresql/data
     networks:
       - ndsnet
     healthcheck:
@@ -103,9 +104,9 @@ services:
     build: aio/
     container_name: aio
     environment:
-      - AWS_ACCESS_KEY_ID=minio
-      - AWS_SECRET_ACCESS_KEY=minio123
-      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
     volumes:
       - ./data/html:/var/lib/ngods/html
       - ./data/stage:/var/lib/ngods/stage
@@ -233,7 +234,7 @@ services:
     hostname: superset-init
     command: >
       bash -c "
-      superset fab create-admin --username admin --firstname Admin --lastname Admin --email admin@superset.com --password admin &&
+      superset fab create-admin --username ${SUPERSET_ADMIN_USERNAME} --firstname Admin --lastname Admin --email ${SUPERSET_ADMIN_EMAIL} --password ${SUPERSET_ADMIN_PASSWORD} &&
       superset db upgrade &&
       superset init
       "
@@ -318,8 +319,8 @@ services:
       <<: *airflow-common-env
       _AIRFLOW_DB_MIGRATE: 'true'
       _AIRFLOW_WWW_USER_CREATE: 'true'
-      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
-      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
+      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME}
+      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD}
       _PIP_ADDITIONAL_REQUIREMENTS: ''
     user: "0:0"
     healthcheck:

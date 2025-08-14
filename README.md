@@ -38,18 +38,45 @@ ngods is open-sourced under a [BSD license](https://github.com/zsvoboda/ngods-st
 # Running the demo
 ngods requires a machine with at least 16GB RAM and Intel or Arm 64 CPU running [Docker](https://www.docker.com/). It requires [docker-compose](https://github.com/docker/compose).
 
+## 环境变量设置
+
+在启动服务之前，您需要设置环境变量：
+
+```bash
+# 复制示例文件
+cp env.local.sample env.local
+
+# 编辑环境变量文件，替换所有 YOUR_* 占位符
+nano env.local
+```
+
+更多详细信息请参考 [ENV_SETUP.md](./ENV_SETUP.md) 文件。
+
+### 验证环境变量设置
+
+在启动服务之前，您可以运行测试脚本验证环境变量是否正确设置：
+
+```bash
+./test_env.sh
+```
+
+## 启动服务
+
 1. Clone the [ngods repo](https://github.com/zsvoboda/ngods-stocks)
 
 ```bash
 git clone https://github.com/zsvoboda/ngods-stocks.git
 ```
 
-2. Start the data stack with the `docker-compose up` command
+2. 设置环境变量（见上文）
+
+3. 启动服务
 
 ```bash
 cd ngods-stocks
 
-docker-compose up -d
+# 使用启动脚本（自动处理环境变量和数据库初始化）
+./start.sh
 ```
 
 **NOTE:** This can take quite long depending on your network speed.
